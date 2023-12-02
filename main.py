@@ -22,10 +22,10 @@ db = client['BotDB']
 users_collection = db['users']
 
 # for signup 
-# class SignupFSM(StatesGroup):
-#     username = State()
-#     phone_number = State()
-#     role = State()
+class SignupFSM(StatesGroup):
+    username = State()
+    phone_number = State()
+    role = State()
 
 # # for login 
 # class LoginFSM(StatesGroup):
@@ -33,14 +33,45 @@ users_collection = db['users']
 #     confirm_password = State()
 
 # # signup handler 
-# @dp.message_handler(Command('signup'))
-# async def signup_command(message: types.Message) -> None:
-#     await message.answer('Please enter your username')
-#     await SignupFSM.username.set() 
-#     await message.answer('Please enter your phone')
-#     await SignupFSM.phone.set()
-#     await message.answer('Please enter your role')
-#     await SignupFSM.role.set()
+@dp.message(Command('signup'))
+async def signup_command(message: types.Message) -> None:
+    await message.answer("Welcome to the signup process!\n Please enter your username:")
+    await SignupFSM.username.set() 
+
+@dp.message(state=SignupFSM.username)
+async def process_username(message: types.Message, state: FSMContext) -> None:
+    username = message.text.strip() 
+    if not username:
+        await message.answer("Please enter a valid username")
+        return
+    
+    if users_collection.find_one({'username': username}):
+        await message.answer("This username is already taken")
+        return
+    
+    await state.update_data(username=username)
+    await message.answer("Please enter your phone number:")
+    await SignupFSM.next()
+
+@dp.message(content_types=types.ContentType.CONTACT, state=SignupFSM.phone_number)
+async def process_phone_number(message: types.Message, state: FSMContext) -> None:
+    phone_number = message.contact.phone_number 
+    if not phone_number:
+        await message.answer("Please Share your phone number")
+        return 
+    await state.update_data(phone_number=phone_number)
+    markup = types.InlineKeyboardMarkup() 
+    driver_button = types.InlineKeyboardButton("Driver", callback_data='Driver')
+    passenger_button = types.InlineKeyboardButton("Passenger", callback_data="passenger")
+    markup.add(driver_button,row_width=1)
+    markup.add(passenger_button) 
+    await message.answer("Please Choose your role: ", reply_markup=markup)
+    await SignupFSM.next()
+     
+
+
+
+
 
 # # login handler
 # @dp.message_handler()
