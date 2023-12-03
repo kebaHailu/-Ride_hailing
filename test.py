@@ -1,24 +1,11 @@
-import asyncio 
-from aiogram import types, Dispatcher , Bot 
-
-TOKEN = '6689372696:AAHNYNiKiHymrQtmQ1lPu3wN_G9uFat3JcA'
-
-
-dp = Dispatcher()
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+from hide import MONGODB_URL
+client = MongoClient(MONGODB_URL, server_api=ServerApi('1'))
 
 
-@dp.message_handler(commands=['start'])
-async def start(msg:types.Message):
-    await msg.answer('Hello, World!')
-
-
-async def main():
-    bot = Bot(TOKEN)
-
-    await dp.start_polling(bot)
-
-
-
-if __name__ == '__main__':
-    
-    asyncio.run(main())
+try:
+    client.admin.command('Ping')
+    print('Connected successfully!')
+except Exception as e:
+    print('Here',e)
